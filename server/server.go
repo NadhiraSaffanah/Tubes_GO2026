@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 // untuk menyimpan username client
@@ -38,6 +39,7 @@ func main() {
 			fmt.Println("New connection accepted!") // kalau berhasil
 		}
 
+		// goroutine
 		go handleConnection(conn)
 	}
 }
@@ -46,24 +48,31 @@ func main() {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	reader := bufio.NewReader(conn) // inisialisasi reader
+	// pasang timeout 3 menit
+	// jika tidak ada jawaban dalam 3 menit, tutup koneksi
+	conn.SetReadDeadline(time.Now().Add(3 * time.Minute))
+
+	reader := bufio.NewReader(conn)
+	fmt.Fprintln(conn, "Username:") // meminta username
 
 	// baca username
 	username, err := reader.ReadString('\n')
 	if err != nil {
-		fmt.Println("Failed to read username")
+		fmt.Println("Connection timeout")
 		return
 	}
 
-	username = strings.TrimSpace(username)
+	username = strings.TrimSpace(username) // ambil username
+
+	conn.SetReadDeadline(time.Time{}) // waktu timeout di-reset
 
 	mutex.Lock() // lock dulu agar tidak berubah
-
 	_, exists := clients[username]
+
 	if exists { // kalau username sudah ada
 		mutex.Unlock() // unlock
 
-		fmt.Fprintln(conn, "Username already exists!")
+		fmt.Fprintln(conn, "USERNAME_ALREADY_EXISTS")
 		fmt.Printf("Rejected username: %s\n", username)
 
 		return
@@ -86,12 +95,21 @@ func handleConnection(conn net.Conn) {
 	}()
 
 	for {
+		// pasang timeout 3 menit
+		// jika tidak ada jawaban dalam 3 menit, tutup koneksi
+		conn.SetReadDeadline(time.Now().Add(3 * time.Minute))
+
 		message, err := reader.ReadString('\n') // baca pesan dengan bufio sampai ketemu newline
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to read message!")
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				fmt.Fprintln(conn, "TIMEOUT")
+			}
+
+			return
 		}
 
-		fmt.Printf("%s: %s\n", username, message)
+		message = strings.TrimSpace(message)
+		fmt.Printf("[%s]: %s\n", username, message)
 	}
 }
