@@ -32,7 +32,7 @@ func main() {
 	ln, err := net.Listen("tcp", ":9090")
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to listen!")
+		fmt.Fprintf(os.Stderr, "Failed to listen!\n")
 		os.Exit(1)
 	} else {
 		fmt.Println("Listening on port 9090...")
@@ -44,7 +44,7 @@ func main() {
 		conn, err := ln.Accept()
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to accept!") // kalau gagal
+			fmt.Fprintf(os.Stderr, "Failed to accept!\n") // kalau gagal
 			os.Exit(1)
 		} else {
 			fmt.Println("New connection accepted!") // kalau berhasil
@@ -163,7 +163,7 @@ func handleConnection(conn net.Conn) {
 
 			//cek apakah user mau buat room baru
 			if createCmd == message {
-				fmt.Fprintf(conn, "Enter a unique name for the room(name will be converted to lower case):")
+				fmt.Fprintf(conn, "Enter a unique name for the room(name will be converted to lower case):\n")
 				roomName, err := reader.ReadString('\n') // baca pesan dengan bufio sampai ketemu newline
 
 				if err != nil {
@@ -177,13 +177,13 @@ func handleConnection(conn net.Conn) {
 				roomName = strings.TrimSpace(roomName)
 				roomName = strings.ToLower(roomName)
 				if createRoom(roomName) == true {
-					fmt.Fprint(conn, "[SERVER] Room has been created")
+					fmt.Fprintln(conn, "[SERVER] Room has been created")
 					continue
 				} else if roomName == "" {
 					fmt.Fprintln(conn, "[SERVER] Room name cannot be empty")
 					continue
 				} else {
-					fmt.Fprint(conn, "[SERVER] Name for room has already been taken")
+					fmt.Fprintln(conn, "[SERVER] Name for room has already been taken")
 					continue
 				}
 			}
@@ -193,7 +193,7 @@ func handleConnection(conn net.Conn) {
 
 			//cek apakah waktu di convert ke integer gagal atau berhasil
 			if err != nil {
-				fmt.Fprintf(conn, "Invalid number, please type in an integer!(1, 2, 3, ....)")
+				fmt.Fprintln(conn, "Invalid number, please type in an integer!(1, 2, 3, ....)")
 				continue
 			}
 
@@ -209,7 +209,7 @@ func handleConnection(conn net.Conn) {
 				mutex.Unlock()
 				messageRoom(tmp, roomId)
 			} else {
-				fmt.Fprintf(conn, "A room with that id doesn't exists, please try again.")
+				fmt.Fprintln(conn, "A room with that id doesn't exists, please try again.")
 				continue
 			}
 
