@@ -95,15 +95,6 @@ func handleConnection(conn net.Conn) {
 
 	mutex.Unlock()
 
-	// melakukan broadcast ketika ada user baru yang join ke percakapan
-	mutex.Lock()
-	for clientName, clientConnection := range clients {
-		if clientName != username {
-			fmt.Fprintf(clientConnection, "%s has joined the chat\n", username)
-		}
-	}
-	mutex.Unlock()
-
 	fmt.Printf("%s connected\n", username)
 	fmt.Fprintln(conn, "WELCOME")
 
@@ -163,7 +154,7 @@ func handleConnection(conn net.Conn) {
 
 			//cek apakah user mau buat room baru
 			if createCmd == message {
-				fmt.Fprintf(conn, "Enter a unique name for the room(name will be converted to lower case):\n")
+				fmt.Fprintln(conn, "Enter a unique name for the room(name will be converted to lower case):")
 				roomName, err := reader.ReadString('\n') // baca pesan dengan bufio sampai ketemu newline
 
 				if err != nil {
@@ -212,6 +203,11 @@ func handleConnection(conn net.Conn) {
 				fmt.Fprintln(conn, "A room with that id doesn't exists, please try again.")
 				continue
 			}
+
+			fmt.Fprintln(conn, "")
+			fmt.Fprintln(conn, "")
+			fmt.Fprintln(conn, "")
+			fmt.Fprintln(conn, "")
 
 		} else { //Setelah room sudah dipilih baru masuk ke else
 			message, err := reader.ReadString('\n') // baca pesan dengan bufio sampai ketemu newline
