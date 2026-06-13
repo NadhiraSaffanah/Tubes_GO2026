@@ -83,12 +83,26 @@ func handleConnection(conn net.Conn) {
 
 	mutex.Unlock()
 
+	// melakukan broadcast ketika ada user baru yang join ke percakapan
+	mutex.Lock()
+	for clientName, clientConnection := range clients {
+		if clientName != username {
+			fmt.Fprintf(clientConnection, "%s has joined the chat\n", username)
+		}
+	}
+	mutex.Unlock()
+
 	fmt.Printf("%s connected\n", username)
 	fmt.Fprintln(conn, "WELCOME")
 
 	defer func() {
 		mutex.Lock()
 		delete(clients, username)
+
+		//melakukan broadcast ketika ada user yang disconnect dari percakapan
+		for _, clientConnection := range clients {
+        	fmt.Fprintf(clientConnection, "%s has left the chat\n", username)
+    	}
 		mutex.Unlock()
 
 		fmt.Printf("%s disconnected\n", username)
@@ -111,5 +125,13 @@ func handleConnection(conn net.Conn) {
 
 		message = strings.TrimSpace(message)
 		fmt.Printf("[%s]: %s\n", username, message)
+
+		mutex.Lock()
+		for clientName, clientConnection := range clients{
+			if clientName != username {
+				fmt.Fprintf(clientConnection, "[%s]: %s\n", username, message)
+			}
+		}
+		mutex.Unlock()
 	}
 }
