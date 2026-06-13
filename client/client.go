@@ -65,13 +65,13 @@ func main() {
 				os.Exit(0)
 			}
 
-			fmt.Print(serverMsg)
+			fmt.Printf("\r\033[K%s\n> ", serverMsg) // \033[K = hapus sisa baris
 		}
 	}()
 
 	// kirim pesan
 	for {
-		fmt.Print("> ")
+		//fmt.Print("> ")
 
 		msg, err := keyboard.ReadString('\n')
 
@@ -80,5 +80,6 @@ func main() {
 		}
 
 		fmt.Fprint(conn, msg)
+		fmt.Print("> ")
 	}
 }

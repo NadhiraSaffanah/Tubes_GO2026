@@ -95,6 +95,15 @@ func handleConnection(conn net.Conn) {
 
 	mutex.Unlock()
 
+	// melakukan broadcast ketika ada user baru yang join ke percakapan
+	mutex.Lock()
+	for clientName, clientConnection := range clients {
+		if clientName != username {
+			fmt.Fprintf(clientConnection, "%s has joined the chat\n", username)
+		}
+	}
+	mutex.Unlock()
+
 	fmt.Printf("%s connected\n", username)
 	fmt.Fprintln(conn, "WELCOME")
 
