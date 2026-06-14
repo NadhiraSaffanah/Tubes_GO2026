@@ -95,7 +95,7 @@ func handleConnection(conn net.Conn) {
 
 	mutex.Unlock()
 
-	fmt.Printf("%s connected\n", username)
+	fmt.Printf("User %s connected\n", username)
 	fmt.Fprintln(conn, "WELCOME")
 
 	welcomeBroadcastMessage := fmt.Sprintf("[SERVER] %s has entered the server!!", username)
@@ -117,7 +117,7 @@ func handleConnection(conn net.Conn) {
 			tmp := fmt.Sprintf("user [%s] has left the room", username)
 			messageRoom(tmp, roomId)
 		}
-		fmt.Printf("%s disconnected\n", username)
+		fmt.Printf("User %s disconnected\n", username)
 		disconectBroadcastMessage := fmt.Sprintf("[SERVER] %s has disconnected from the server.", username)
 		broadcastMessage(disconectBroadcastMessage, nil)
 	}()
@@ -125,6 +125,7 @@ func handleConnection(conn net.Conn) {
 	fmt.Fprintf(conn, "To close your connection use command %s\n", endCmd)
 	fmt.Fprintf(conn, "To leave the room use command %s\n", leaveCmd)
 	fmt.Fprintf(conn, "To create a room use command %s\n", createCmd)
+	var roomName string
 	for {
 		// pasang timeout 3 menit
 		// jika tidak ada jawaban dalam 3 menit, tutup koneksi
@@ -169,6 +170,7 @@ func handleConnection(conn net.Conn) {
 				roomName = strings.ToLower(roomName)
 				if createRoom(roomName) == true {
 					fmt.Fprintln(conn, "[SERVER] Room has been created")
+					fmt.Printf("Room %s has been created\n", roomName)
 					continue
 				} else if roomName == "" {
 					fmt.Fprintln(conn, "[SERVER] Room name cannot be empty")
@@ -197,8 +199,10 @@ func handleConnection(conn net.Conn) {
 				tmp := fmt.Sprintf("user [%s] has joined the room", username)
 				mutex.Lock()
 				roomId = clientRoom[conn]
+				roomName = roomArr[roomId]
 				mutex.Unlock()
 				messageRoom(tmp, roomId)
+				fmt.Printf("User %s has joined room number %s\n", username, roomName)
 			} else {
 				fmt.Fprintln(conn, "A room with that id doesn't exists, please try again.")
 				continue
@@ -206,6 +210,7 @@ func handleConnection(conn net.Conn) {
 
 			fmt.Fprintln(conn, "")
 			fmt.Fprintln(conn, "")
+			fmt.Fprintln(conn, "---------------------------------------")
 			fmt.Fprintln(conn, "")
 			fmt.Fprintln(conn, "")
 
@@ -224,6 +229,7 @@ func handleConnection(conn net.Conn) {
 			//cek apakah user type command untuk leave room
 			if leaveCmd == message {
 				leaveRoom(conn, roomId)
+				fmt.Printf("User %s has left the room %s\n", username, roomName)
 				tmp := fmt.Sprintf("user [%s] has left the room", username)
 				messageRoom(tmp, roomId)
 				continue
