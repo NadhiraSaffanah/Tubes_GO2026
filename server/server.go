@@ -95,7 +95,7 @@ func handleConnection(conn net.Conn) {
 
 	mutex.Unlock()
 
-	fmt.Printf("User %s connected\n", username)
+	fmt.Printf("User [%s] connected\n", username)
 	fmt.Fprintln(conn, "WELCOME")
 
 	welcomeBroadcastMessage := fmt.Sprintf("[SERVER] %s has entered the server!!", username)
@@ -115,9 +115,9 @@ func handleConnection(conn net.Conn) {
 		mutex.Unlock()
 		if roomId != -1 { // ini dipisah karena kalau di diatas, bakal kena mutex.Lock() 2 kali
 			tmp := fmt.Sprintf("user [%s] has left the room", username)
-			messageRoom(tmp, roomId)
+			messageRoom(tmp, roomId, conn)
 		}
-		fmt.Printf("User %s disconnected\n", username)
+		fmt.Printf("User [%s] disconnected\n", username)
 		disconectBroadcastMessage := fmt.Sprintf("[SERVER] %s has disconnected from the server.", username)
 		broadcastMessage(disconectBroadcastMessage, nil)
 	}()
@@ -170,7 +170,7 @@ func handleConnection(conn net.Conn) {
 				roomName = strings.ToLower(roomName)
 				if createRoom(roomName) == true {
 					fmt.Fprintln(conn, "[SERVER] Room has been created")
-					fmt.Printf("Room %s has been created\n", roomName)
+					fmt.Printf("Room [%s] has been created\n", roomName)
 					continue
 				} else if roomName == "" {
 					fmt.Fprintln(conn, "[SERVER] Room name cannot be empty")
@@ -201,7 +201,7 @@ func handleConnection(conn net.Conn) {
 				roomId = clientRoom[conn]
 				roomName = roomArr[roomId]
 				mutex.Unlock()
-				messageRoom(tmp, roomId)
+				messageRoom(tmp, roomId, conn)
 				fmt.Printf("User %s has joined room number %s\n", username, roomName)
 			} else {
 				fmt.Fprintln(conn, "A room with that id doesn't exists, please try again.")
@@ -229,9 +229,9 @@ func handleConnection(conn net.Conn) {
 			//cek apakah user type command untuk leave room
 			if leaveCmd == message {
 				leaveRoom(conn, roomId)
-				fmt.Printf("User %s has left the room %s\n", username, roomName)
+				fmt.Printf("User [%s] has left the room [%s]\n", username, roomName)
 				tmp := fmt.Sprintf("user [%s] has left the room", username)
-				messageRoom(tmp, roomId)
+				messageRoom(tmp, roomId, conn)
 				continue
 			}
 			//cek apakah user mau stop koneksi
@@ -240,7 +240,7 @@ func handleConnection(conn net.Conn) {
 			}
 
 			message = fmt.Sprintf("[%s]: %s", username, message)
-			messageRoom(message, roomId)
+			messageRoom(message, roomId, conn)
 		}
 	}
 }
@@ -257,11 +257,13 @@ func broadcastMessage(msg string, exclude net.Conn) {
 	}
 }
 
-func messageRoom(msg string, room int) {
+func messageRoom(msg string, room int, exclude net.Conn) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	for conn := range roomClient[room] {
-		fmt.Fprintln(conn, msg)
+		if conn != exclude {
+			fmt.Fprintln(conn, msg)
+		}
 	}
 }
 
