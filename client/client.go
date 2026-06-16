@@ -57,7 +57,14 @@ func main() {
 	// goroutine untuk menerim pesan dari server
 	go func() {
 		for {
-			serverMsg, _ := serverReader.ReadString('\n')
+			serverMsg, err := serverReader.ReadString('\n')
+
+			// handle error, jika server menutup koneksi, client akan keluar
+			if err != nil {
+				fmt.Println("\nServer closed the connection.")
+				os.Exit(0) // paksa seluruh client berhenti saat ini juga
+			}
+
 			serverMsg = strings.TrimSpace(serverMsg)
 
 			if serverMsg == "TIMEOUT" {
